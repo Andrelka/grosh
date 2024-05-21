@@ -1,8 +1,8 @@
 import os
 import logging
 import openai
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, Dispatcher
+from telegram import Update, Bot
+from telegram.ext import CommandHandler, MessageHandler, Filters, Dispatcher
 from flask import Flask, request
 
 # Включите логирование
@@ -17,12 +17,12 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Функция для команды /start
-def start(update: Update, context: CallbackContext) -> None:
+def start(update: Update, context) -> None:
     user = update.effective_user
     update.message.reply_text(f'Привет, {user.first_name}! Я бот GPT-4. Спроси меня о чем угодно.')
 
 # Функция для обработки сообщений
-def handle_message(update: Update, context: CallbackContext) -> None:
+def handle_message(update: Update, context) -> None:
     user_message = update.message.text
     chat_id = update.message.chat_id
 
@@ -54,7 +54,7 @@ def main() -> None:
     # Установка токена для OpenAI
     openai.api_key = OPENAI_API_KEY
 
-    # Создание объекта Updater и передача ему токена бота
+    # Создание объекта Bot и Dispatcher
     global bot
     bot = Bot(token=TELEGRAM_TOKEN)
     global dispatcher
@@ -65,7 +65,7 @@ def main() -> None:
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
 
     # Установка Webhook
-    webhook_url = f'https://grosh-production.up.railway.app/'
+    webhook_url = f'grosh-production.up.railway.app.railway.app/webhook'
     bot.set_webhook(webhook_url)
 
     # Запуск Flask приложения
