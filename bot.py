@@ -65,7 +65,7 @@ def main() -> None:
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
 
     # Установка Webhook
-    webhook_url = f'https://<your-app-name>.railway.app/webhook'
+    webhook_url = f'https://grosh-production.up.railway.app/'
     bot.set_webhook(webhook_url)
 
     # Запуск Flask приложения
