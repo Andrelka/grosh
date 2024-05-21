@@ -1,8 +1,9 @@
 import os
 import logging
 import openai
-from telegram import Update, ForceReply
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, Dispatcher
+from flask import Flask, request
 
 # Включите логирование
 logging.basicConfig(
@@ -11,6 +12,9 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
+# Flask приложение
+app = Flask(__name__)
 
 # Функция для команды /start
 def start(update: Update, context: CallbackContext) -> None:
@@ -34,6 +38,14 @@ def handle_message(update: Update, context: CallbackContext) -> None:
     # Ответ бота
     context.bot.send_message(chat_id=chat_id, text=bot_response)
 
+@app.route('/webhook', methods=['POST'])
+def webhook() -> str:
+    if request.method == "POST":
+        update = Update.de_json(request.get_json(), bot)
+        dispatcher.process_update(update)
+        return "OK"
+    return "Webhook is working!"
+
 def main() -> None:
     # Токены
     TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
@@ -43,17 +55,21 @@ def main() -> None:
     openai.api_key = OPENAI_API_KEY
 
     # Создание объекта Updater и передача ему токена бота
-    updater = Updater(TELEGRAM_TOKEN)
-
-    dispatcher = updater.dispatcher
+    global bot
+    bot = Bot(token=TELEGRAM_TOKEN)
+    global dispatcher
+    dispatcher = Dispatcher(bot, None, use_context=True)
 
     # Добавление обработчиков
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
 
-    # Запуск бота
-    updater.start_polling()
-    updater.idle()
+    # Установка Webhook
+    webhook_url = f'https://<your-app-name>.railway.app/webhook'
+    bot.set_webhook(webhook_url)
+
+    # Запуск Flask приложения
+    app.run(port=5000)
 
 if __name__ == '__main__':
     main()
